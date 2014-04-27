@@ -36,12 +36,53 @@ void propagate(int x, int y, signed int * now, signed int * then)
 	}
 }
 
+/*
+ * Set the pixel at (x, y) to the given value
+ * NOTE: The surface must be locked before calling this!
+ */
+void putpixel(SDL_Surface *surface, int x, int y, Uint32 pixel)
+{
+    int bpp = surface->format->BytesPerPixel;
+    /* Here p is the address to the pixel we want to set */
+    Uint8 *p = (Uint8 *)surface->pixels + y * surface->pitch + x * bpp;
+
+    switch(bpp) {
+    case 1:
+        *p = pixel;
+        break;
+
+    case 2:
+        *(Uint16 *)p = pixel;
+        break;
+
+    case 3:
+        if(SDL_BYTEORDER == SDL_BIG_ENDIAN) {
+            p[0] = (pixel >> 16) & 0xff;
+            p[1] = (pixel >> 8) & 0xff;
+            p[2] = pixel & 0xff;
+        } else {
+            p[0] = pixel & 0xff;
+            p[1] = (pixel >> 8) & 0xff;
+            p[2] = (pixel >> 16) & 0xff;
+        }
+        break;
+
+    case 4:
+        *(Uint32 *)p = pixel;
+        break;
+    }
+}
+
+
+
 int main(int argv, char ** argc)
 {
+	SDL_Surface * screen;
 	SDL_Init(SDL_INIT_VIDEO);
-	SDL_SetVideoMode(W,H,32,0);
-	signed int * now, * then;
-	int x,y;
+	Uint32 color;
+	screen = SDL_SetVideoMode(W,H,32,SDL_SWSURFACE | SDL_DOUBLEBUF);
+	signed int * now, * then, * carry;
+	int x,y,v;
 	now=b1;
 	then=b2;
 	for (x=0;x<W;x++)
@@ -56,6 +97,28 @@ int main(int argv, char ** argc)
 		setcell(x,y,-1,then);
 	}
 	setcell(70,70,200,then);
-
+	while(1)
+	{
+		for (x=0;x<W;x++)
+			for(y=0;y<H;y++)
+				propagate(x,y,now,then);
+		if (SDL_MUSTLOCK(screen))
+			SDL_LockSurface(screen);
+		for (x=0;x<W;x++)
+		{
+			for (y=0;y<H;y++)
+			{
+				v=getcell(x,y,now);
+				if (v==-1) 
+					color=SDL_MapRGB(screen->format,0xff,0,0);
+				else
+					color=SDL_MapRGB(screen->format,0,0,v);
+				putpixel(screen,x,y,color);
+			}
+		}
+		if (SDL_MUSTLOCK(screen))
+			SDL_UnlockSurface(screen);
+		SDL_UpdateRect(screen,0,0,W,H);
+	}
 }
 
