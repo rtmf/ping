@@ -1,14 +1,14 @@
 #include "SDL.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 #define W 200
 #define H 200
 
-#define MAX(X,Y) ((X) > (Y) ? (X) : (Y))
 signed int b1[W*H],b2[W*H];
 
-signed int * getcell(int x, int y, int * from)
+signed int  getcell(int x, int y, int * from)
 {
 	if (x<0 || y<0 || x>W || y>H) return -1;
 	return from[x+y*W];
@@ -18,7 +18,11 @@ void setcell(int x, int y, signed int v, int * in)
 	if (x<0 || y<0 || x>W || y>H) return;
 	in[x+y*W]=v;
 }
-void propagate(int x, int y, signed int * now, signed int * then)
+signed int MAX(signed int a, signed int b)
+{
+	if (a>b) return a; else return b;
+}
+void propagate(int x, int y, signed int * now, signed int * then, int flag)
 {
 	signed int v=0;
 	if (getcell(x,y,then)==-1)
@@ -27,10 +31,18 @@ void propagate(int x, int y, signed int * now, signed int * then)
 	}
 	else
 	{
+		v=getcell(x,y,then);
 		v=MAX(v,getcell(x-1,y,then));
 		v=MAX(v,getcell(x,y-1,then));
 		v=MAX(v,getcell(x+1,y,then));
 		v=MAX(v,getcell(x,y+1,then));
+		if (flag)
+		{
+			v=MAX(v,getcell(x-1,y-1,then));
+			v=MAX(v,getcell(x+1,y-1,then));
+			v=MAX(v,getcell(x+1,y+1,then));
+			v=MAX(v,getcell(x-1,y+1,then));
+		}
 		if (v>0) v--;
 		setcell(x,y,v,now);
 	}
@@ -83,8 +95,11 @@ int main(int argv, char ** argc)
 	screen = SDL_SetVideoMode(W,H,32,SDL_SWSURFACE | SDL_DOUBLEBUF);
 	signed int * now, * then, * carry;
 	int x,y,v;
+	float s2=sqrt(2);
+	float count;
 	now=b1;
 	then=b2;
+	int flag=0;
 	for (x=0;x<W;x++)
 	{
 		for (y=0;y<H;y++)
@@ -99,14 +114,22 @@ int main(int argv, char ** argc)
 	setcell(70,70,200,then);
 	while(1)
 	{
-		for (x=0;x<W;x++)
-			for(y=0;y<H;y++)
-				propagate(x,y,now,then);
+		count+=s2;
+		if (count>3)
+		{
+			count=0;
+			flag=1;
+		}
+		else
+			flag=0;
+		for (y=0;y<H;y++)
+			for(x=0;x<W;x++)
+				propagate(x,y,now,then,flag);
 		if (SDL_MUSTLOCK(screen))
 			SDL_LockSurface(screen);
-		for (x=0;x<W;x++)
+		for (y=0;y<H;y++)
 		{
-			for (y=0;y<H;y++)
+			for (x=0;x<W;x++)
 			{
 				v=getcell(x,y,now);
 				if (v==-1) 
@@ -119,6 +142,9 @@ int main(int argv, char ** argc)
 		if (SDL_MUSTLOCK(screen))
 			SDL_UnlockSurface(screen);
 		SDL_UpdateRect(screen,0,0,W,H);
+		carry=now;
+		now=then;
+		then=carry;
 	}
 }
 
