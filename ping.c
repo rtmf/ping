@@ -35,7 +35,7 @@ void propagate(int x, int y, signed int * now, signed int * then, int flag)
 	}
 	else if (v==-2)
 	{
-		setcell(x,y,-3,now);
+		setcell(x,y,0,now);
 	}
 	else if (v>0)
 	{
@@ -103,6 +103,7 @@ int main(int argv, char ** argc)
 {
 	SDL_Surface * screen;
 	SDL_Init(SDL_INIT_VIDEO);
+	SDL_Event event;
 	Uint32 color;
 	screen = SDL_SetVideoMode(W,H,32,SDL_SWSURFACE | SDL_DOUBLEBUF);
 	signed int * now, * then, * carry;
@@ -122,16 +123,17 @@ int main(int argv, char ** argc)
 	}
 	for (x=40;x<160;x++)
 	{
-		setcell(x,80,-1,then);
-		setcell(80,x,-1,then);
+		for (y=50;y<190;y++)
+		{
+			setcell(x,y,-1,then);
+		}
 	}
-	setcell(70,70,200,then);
 	while(1)
 	{
 		count+=s2;
-		if (count>3)
+		if (count>4)
 		{
-			count=0;
+			count-=4;
 			flag=1;
 		}
 		else
@@ -147,7 +149,7 @@ int main(int argv, char ** argc)
 			{
 				v=getcell(x,y,now);
 				if (v==-1) 
-					color=SDL_MapRGB(screen->format,0xff,0,0);
+					color=SDL_MapRGB(screen->format,0,0,0);
 				else if (v==-2)
 					color=SDL_MapRGB(screen->format,0,0,0);
 				else if (v==-3)
@@ -163,6 +165,17 @@ int main(int argv, char ** argc)
 		carry=now;
 		now=then;
 		then=carry;
+		while(SDL_PollEvent(&event))
+		{
+			switch(event.type)
+			{
+				case SDL_MOUSEBUTTONDOWN:
+					setcell(event.button.x,event.button.y,200,then);
+					break;
+				case SDL_QUIT:
+					return 0;
+			}
+		}
 	}
 }
 
