@@ -24,14 +24,25 @@ signed int MAX(signed int a, signed int b)
 }
 void propagate(int x, int y, signed int * now, signed int * then, int flag)
 {
-	signed int v=0;
-	if (getcell(x,y,then)==-1)
+	signed int v=getcell(x,y,then);
+	if (v==-1)
 	{
 		setcell(x,y,-1,now);
 	}
+	else if (v==-3)
+	{
+		setcell(x,y,0,now);
+	}
+	else if (v==-2)
+	{
+		setcell(x,y,-3,now);
+	}
+	else if (v>0)
+	{
+		setcell(x,y,-2,now);
+	}
 	else
 	{
-		v=getcell(x,y,then);
 		v=MAX(v,getcell(x-1,y,then));
 		v=MAX(v,getcell(x,y-1,then));
 		v=MAX(v,getcell(x+1,y,then));
@@ -44,6 +55,7 @@ void propagate(int x, int y, signed int * now, signed int * then, int flag)
 			v=MAX(v,getcell(x-1,y+1,then));
 		}
 		if (v>0) v--;
+		//if (v==0 && rand()%16384==0) v=200;
 		setcell(x,y,v,now);
 	}
 }
@@ -100,6 +112,7 @@ int main(int argv, char ** argc)
 	now=b1;
 	then=b2;
 	int flag=0;
+	srand(1);
 	for (x=0;x<W;x++)
 	{
 		for (y=0;y<H;y++)
@@ -107,7 +120,7 @@ int main(int argv, char ** argc)
 			setcell(x,y,0,then);
 		}
 	}
-	for (x=10;x<90;x++)
+	for (x=40;x<160;x++)
 	{
 		setcell(x,80,-1,then);
 		setcell(80,x,-1,then);
@@ -135,6 +148,10 @@ int main(int argv, char ** argc)
 				v=getcell(x,y,now);
 				if (v==-1) 
 					color=SDL_MapRGB(screen->format,0xff,0,0);
+				else if (v==-2)
+					color=SDL_MapRGB(screen->format,0,0,0);
+				else if (v==-3)
+					color=SDL_MapRGB(screen->format,0,0,0);
 				else
 					color=SDL_MapRGB(screen->format,0,0,v);
 				putpixel(screen,x,y,color);
