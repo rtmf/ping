@@ -3,19 +3,19 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define W 200
-#define H 200
+#define W 400
+#define H 400
 
 signed int b1[W*H],b2[W*H];
 
 signed int  getcell(int x, int y, int * from)
 {
-	if (x<0 || y<0 || x>W || y>H) return -1;
+	if (x<0 || y<0 || x>=W || y>=H) return -1;
 	return from[x+y*W];
 }
 void setcell(int x, int y, signed int v, int * in)
 {
-	if (x<0 || y<0 || x>W || y>H) return;
+	if (x<0 || y<0 || x>=W || y>=H) return;
 	in[x+y*W]=v;
 }
 signed int MAX(signed int a, signed int b)
@@ -107,9 +107,10 @@ int main(int argv, char ** argc)
 			setcell(x,y,0,then);
 		}
 	}
-	for (x=10;x<50;x++)
+	for (x=10;x<90;x++)
 	{
-		setcell(x,y,-1,then);
+		setcell(x,80,-1,then);
+		setcell(80,x,-1,then);
 	}
 	setcell(70,70,200,then);
 	while(1)
